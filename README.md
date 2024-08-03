@@ -35,16 +35,19 @@
         - It is a technique to manage concurrent processes using an integer
         - It is a non-negative integer value which is shared between threads
         - After getting initializedm, it can only be accessed through two atomic operations
-```def wait(S):
+````
+```
+def wait(S):
     # Blocks other processes by sending in a while loop
     while S<=0:continue
     # Acquires the lock for the process
     S-=1
 
-    def signal(S):
-        # Releases the lock
-        S+=1
+def signal(S):
+    # Releases the lock
+    S+=1
 ```
+````
         - Two Types:
             - Binary Semaphore: 0(locked) and 1(unlocked)
             - Counting Semaphore: 0(locked), >=1(unlocked)
