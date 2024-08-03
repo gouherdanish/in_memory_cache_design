@@ -1,20 +1,20 @@
-## Caching Concepts
+# Caching Concepts
 
-# Introduction
+## Introduction
 - Cache stores key-value pairs
 - It enables fast read-write using in-memory access
 
-# Capacity Management
+## Capacity Management
 - How many keys can be stored, any limit ?
 
-# Eviction Policy
+## Eviction Policy
 - How to remove data when capacity is reached ?
 
-# Expiration 
+## Expiration 
 - Do cache entries have expiration ? Different for each key ?
 - How frequently to clean up expired entries ?
 
-# Thread Safety [Required]
+## Thread Safety [Required]
 - When shared variables are updated concurrently by different processes, data inconsistencies may occur (race condition)
 - This happens due to Critical Section Problem i.e. multiple processes are allowed to enter their critical section where they update the shared variable. 3 criteria to solve this
     - Mutual Exclusion - If P1 is updating the shared variable, then P2 should wait
@@ -35,15 +35,15 @@
         - It is a technique to manage concurrent processes using an integer
         - It is a non-negative integer value which is shared between threads
         - After getting initializedm, it can only be accessed through two atomic operations
-            ```def wait(S):
-                    # Blocks other processes by sending in a while loop
-                    while S<=0:continue
-                    # Acquires the lock for the process
-                    S-=1
+            `def wait(S):
+                # Blocks other processes by sending in a while loop
+                while S<=0:continue
+                # Acquires the lock for the process
+                S-=1
 
-            ```def signal(S):
-                    # Releases the lock
-                    S+=1
+            `def signal(S):
+                # Releases the lock
+                S+=1
         - Two Types:
             - Binary Semaphore: 0(locked) and 1(unlocked)
             - Counting Semaphore: 0(locked), >=1(unlocked)
@@ -56,13 +56,13 @@
                 - P2 requests S but waiting for P1 to release S
                 - This ends up in Deadlock
 
-# Support Multiple Data Types [Optional]
+## Support Multiple Data Types [Optional]
 - String
 - Int
 - Float
 - Boolean
 
-# Persistance [Optional]
+## Persistance [Optional]
 - Cache is cleared once power goes which can be a problem sometimes
 - So, we can include persistance mechanisms to save data to disk and load it once power back
 - Json File 
