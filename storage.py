@@ -27,3 +27,12 @@ class LRUCache:
             self._cache[key] = val
             return val
         return None
+    
+    def delete(self,key):
+        if key in self._cache:
+            del self._cache[key]
+
+    def clear_expired(self):
+        expired_keys = [key for key,val in self._cache.items() if val.is_expired()]
+        for key in expired_keys:
+            del self._cache[key]
