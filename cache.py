@@ -1,3 +1,4 @@
+import random
 import time
 import threading
 
@@ -29,13 +30,9 @@ class ThreadSafeCache:
                 else: self._storage.delete(key)
             return None
 
-    def set(self,key,val,expires_in=None):
-        print(key,val,expires_in)
+    def set(self,key,val,ttl=None):
         with self._lock:
-            print(key,val,expires_in,time.time())
-            expiration = time.time() + expires_in if expires_in else None
-            print(expiration)
-            entry = CacheEntry(val,expiration)
+            entry = CacheEntry(val,ttl)
             self._storage.put(key,entry)
 
     def stop(self):
@@ -49,33 +46,34 @@ class ThreadSafeCache:
 
     def _cleanup_expired(self):
         with self._lock:
-            for key,entry in self._storage._cache.items():
-                if entry.is_expired():
-                    self._storage.delete(key)
+            self._storage.clear_expired()
 
 if __name__=='__main__':
     cache = ThreadSafeCache(capacity=5,cleanup_interval=5)
     print(cache._storage)
 
-    cache.set('apple',100,expires_in=3)
+    cache.set('apple',100,ttl=3)
     print(cache._storage)
 
-    cache.set('orange',80,expires_in=7)
+    cache.set('orange',80,ttl=7)
     print(cache._storage)
 
-    print('SLEEPING for 4')
+    # Wait for apple to expire
     time.sleep(4)
     print(cache.get('apple'))
 
     cache.set('apple',150)
     print(cache._storage)
 
-    cache.set('mango',120,expires_in=4)
+    cache.set('mango',120,ttl=14)
     print(cache._storage)
     
     # Run for a while to see periodic cleanup in action
     time.sleep(10)
-    cache.stop()  # Stop the cleanup thread properly
+    print(cache._storage)
+
+    # Stop the cleanup thread properly
+    cache.stop()  
 
 
 
