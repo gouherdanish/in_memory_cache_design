@@ -25,7 +25,7 @@ class ThreadSafeCache:
         self._cleanup_interval = cleanup_interval
         self._lock = threading.Lock()
         self._storage = StorageFactory.get_manager(eviction_policy,capacity=capacity)
-        self._cleanup = CleanupFactory.get_manager(cleanup_policy,)
+        self._cleanup = CleanupFactory.get_manager(cleanup_policy)
         self._cleanup.start(self._periodic_cleanup)
     
     def get(self,key):
