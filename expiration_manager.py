@@ -1,7 +1,7 @@
 import threading
 import time
 
-class ExpirationHandler:
+class ExpirationManager:
     def __init__(self) -> None:
         self._stop_cleanup_event = threading.Event()
 

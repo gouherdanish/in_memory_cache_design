@@ -2,9 +2,9 @@ import random
 import time
 import threading
 
-from storage import LRUCache
+from storage_manager import StorageFactory
 from cache_entry import CacheEntry
-from expiration_handler import ExpirationHandler
+from expiration_manager import ExpirationManager
 
 class ThreadSafeCache:
     """
@@ -14,13 +14,18 @@ class ThreadSafeCache:
     - Implements Expiration Policy on Cache Keys
         - Uses a parallel daemon thread running every 5 second
     """
-    def __init__(self,capacity,cleanup_interval) -> None:
+    def __init__(
+            self,
+            capacity=5,
+            cleanup_interval=5,
+            eviction_policy='lru'
+        ) -> None:
         self._capacity = capacity
         self._cleanup_interval = cleanup_interval
-        self._storage = LRUCache(capacity)
         self._lock = threading.Lock()
-        self._expiration_handler = ExpirationHandler()
-        self._expiration_handler.track(self._periodic_cleanup)
+        self._storage = StorageFactory.get_manager(eviction_policy,capacity=capacity)
+        self._expiration_manager = ExpirationManager()
+        self._expiration_manager.track(self._periodic_cleanup)
     
     def get(self,key):
         with self._lock:
@@ -40,11 +45,11 @@ class ThreadSafeCache:
             self._storage.clear_expired()
 
     def stop(self):
-        self._expiration_handler.stop()
+        self._expiration_manager.stop()
 
     def _periodic_cleanup(self):
-        while not self._expiration_handler._stop_cleanup_event.is_set():
-            self._expiration_handler.sleep(interval=self._cleanup_interval)
+        while not self._expiration_manager._stop_cleanup_event.is_set():
+            self._expiration_manager.sleep(interval=self._cleanup_interval)
             self.clear()
 
 
