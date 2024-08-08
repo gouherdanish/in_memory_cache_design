@@ -52,7 +52,6 @@ class ThreadSafeCache:
             self._cleanup.pause(interval=self._cleanup_interval)
             self.clear()
 
-
 if __name__=='__main__':
     cache = ThreadSafeCache(capacity=5,cleanup_interval=3)
     print(cache._storage)
