@@ -2,9 +2,9 @@ import random
 import time
 import threading
 
-from storage_manager import StorageFactory
 from cache_entry import CacheEntry
-from expiration_manager import ExpirationManager
+from factory.storage_factory import StorageFactory
+from factory.cleanup_factory import CleanupFactory
 
 class ThreadSafeCache:
     """
@@ -17,15 +17,16 @@ class ThreadSafeCache:
     def __init__(
             self,
             capacity=5,
+            eviction_policy='lru',
             cleanup_interval=5,
-            eviction_policy='lru'
+            cleanup_policy='background'
         ) -> None:
         self._capacity = capacity
         self._cleanup_interval = cleanup_interval
         self._lock = threading.Lock()
         self._storage = StorageFactory.get_manager(eviction_policy,capacity=capacity)
-        self._expiration_manager = ExpirationManager()
-        self._expiration_manager.track(self._periodic_cleanup)
+        self._cleanup = CleanupFactory.get_manager(cleanup_policy,)
+        self._cleanup.start(self._periodic_cleanup)
     
     def get(self,key):
         with self._lock:
@@ -45,11 +46,11 @@ class ThreadSafeCache:
             self._storage.clear_expired()
 
     def stop(self):
-        self._expiration_manager.stop()
+        self._cleanup.stop()
 
     def _periodic_cleanup(self):
-        while not self._expiration_manager._stop_cleanup_event.is_set():
-            self._expiration_manager.sleep(interval=self._cleanup_interval)
+        while not self._cleanup._stop_cleanup_event.is_set():
+            self._cleanup.pause(interval=self._cleanup_interval)
             self.clear()
 
 
