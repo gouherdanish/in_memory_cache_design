@@ -4,7 +4,7 @@ import threading
 
 from cache_entry import CacheEntry
 from factory.storage_factory import StorageFactory
-from factory.cleanup_factory import CleanupFactory
+from factory.cleanup_factory import BackgroundThreadCleanup
 
 class ThreadSafeCache:
     """
@@ -18,14 +18,13 @@ class ThreadSafeCache:
             self,
             capacity=5,
             eviction_policy='lru',
-            cleanup_interval=5,
-            cleanup_policy='background'
+            cleanup_interval=5
         ) -> None:
         self._capacity = capacity
         self._cleanup_interval = cleanup_interval
         self._lock = threading.Lock()
         self._storage = StorageFactory.get_manager(eviction_policy,capacity=capacity)
-        self._cleanup = CleanupFactory.get_manager(cleanup_policy)
+        self._cleanup = BackgroundThreadCleanup()
         self._cleanup.start(self._periodic_cleanup)
     
     def get(self,key):
