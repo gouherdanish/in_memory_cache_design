@@ -33,6 +33,6 @@ class LRUCache:
             del self._cache[key]
 
     def clear_expired(self):
-        expired_keys = [key for key,val in self._cache.items() if val.is_expired()]
+        expired_keys = [key for key,entry in self._cache.items() if entry.is_expired()]
         for key in expired_keys:
             del self._cache[key]

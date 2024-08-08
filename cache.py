@@ -12,7 +12,7 @@ class ThreadSafeCache:
     - Uses lock to make thread safe updates
     - Uses LRU policy for capacity management
     - Implements Expiration Policy on Cache Keys
-        - Uses a parallel daemon thread running every 1 second
+        - Uses a parallel daemon thread running every 5 second
     """
     def __init__(self,capacity,cleanup_interval) -> None:
         self._capacity = capacity
@@ -35,23 +35,24 @@ class ThreadSafeCache:
             entry = CacheEntry(val,ttl)
             self._storage.put(key,entry)
 
+    def clear(self):
+        with self._lock:
+            self._storage.clear_expired()
+
     def stop(self):
         self._expiration_handler.stop()
 
     def _periodic_cleanup(self):
         while not self._expiration_handler._stop_cleanup_event.is_set():
-            print(f'Sleeping with Daemon for {self._cleanup_interval} s')
-            time.sleep(self._cleanup_interval)
-            self._cleanup_expired()
+            self._expiration_handler.sleep(interval=self._cleanup_interval)
+            self.clear()
 
-    def _cleanup_expired(self):
-        with self._lock:
-            self._storage.clear_expired()
 
 if __name__=='__main__':
-    cache = ThreadSafeCache(capacity=5,cleanup_interval=5)
+    cache = ThreadSafeCache(capacity=5,cleanup_interval=3)
     print(cache._storage)
 
+    # Caching some entries 
     cache.set('apple',100,ttl=3)
     print(cache._storage)
 
@@ -60,7 +61,7 @@ if __name__=='__main__':
 
     # Wait for apple to expire
     time.sleep(4)
-    print(cache.get('apple'))
+    print(cache._storage)
 
     cache.set('apple',150)
     print(cache._storage)
