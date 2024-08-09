@@ -11,8 +11,7 @@ class ThreadSafeCache:
     Features 
     - Uses lock to make thread safe updates
     - Uses LRU policy for capacity management
-    - Implements Expiration Policy on Cache Keys
-        - Uses a parallel daemon thread running every 5 second
+    - Implements Expiration Policy on Cache Keys by using a background thread
     """
     def __init__(
             self,
