@@ -4,7 +4,8 @@ import threading
 
 from cache_entry import CacheEntry
 from factory.storage_factory import StorageFactory
-from factory.cleanup_factory import BackgroundThreadCleanup
+from factory.worker_factory import CleanupWorker
+from factory.persistance_factory import JsonPersistance
 
 class ThreadSafeCache:
     """
@@ -23,8 +24,12 @@ class ThreadSafeCache:
         self._cleanup_interval = cleanup_interval
         self._lock = threading.Lock()
         self._storage = StorageFactory.get_manager(eviction_policy,capacity=capacity)
-        self._cleanup = BackgroundThreadCleanup()
-        self._cleanup.start(self._periodic_cleanup)
+        self._persistance = JsonPersistance()
+        self.__start_workers__()
+
+    def __start_workers__(self):
+        self._storage_cleanup_worker = CleanupWorker()
+        self._storage_cleanup_worker.start(self._periodic_cleanup)
     
     def get(self,key):
         with self._lock:
@@ -34,32 +39,41 @@ class ThreadSafeCache:
                 else: self._storage.delete(key)
             return None
 
-    def set(self,key,val,ttl=None):
+    def set(self,key,val,expiration=None):
         with self._lock:
-            entry = CacheEntry(val,ttl)
+            entry = CacheEntry(val,expiration)
             self._storage.put(key,entry)
 
     def clear(self):
         with self._lock:
             self._storage.clear_expired()
 
+    def persist(self):
+        with self._lock:
+            self._persistance.save(self._storage._cache)
+
     def stop(self):
-        self._cleanup.stop()
+        self._storage_cleanup_worker.stop()
 
     def _periodic_cleanup(self):
-        while not self._cleanup._stop_cleanup_event.is_set():
-            self._cleanup.pause(interval=self._cleanup_interval)
+        while not self._storage_cleanup_worker._stop_event.is_set():
+            self._storage_cleanup_worker.pause(interval=self._cleanup_interval)
             self.clear()
+
+    def _periodic_save(self):
+        while True:
+            time.sleep(15)
+            self.persist()
 
 if __name__=='__main__':
     cache = ThreadSafeCache(capacity=5,cleanup_interval=3)
     print(cache._storage)
 
     # Caching some entries 
-    cache.set('apple',100,ttl=3)
+    cache.set('apple',100,expiration=3)
     print(cache._storage)
 
-    cache.set('orange',80,ttl=7)
+    cache.set('orange',80,expiration=7)
     print(cache._storage)
 
     # Wait for apple to expire
@@ -69,7 +83,7 @@ if __name__=='__main__':
     cache.set('apple',150)
     print(cache._storage)
 
-    cache.set('mango',120,ttl=14)
+    cache.set('mango',120,expiration=14)
     print(cache._storage)
     
     # Run for a while to see periodic cleanup in action
