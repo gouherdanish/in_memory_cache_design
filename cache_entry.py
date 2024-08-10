@@ -1,13 +1,13 @@
 import time
 
 class CacheEntry:
-    def __init__(self,value,ttl) -> None:
+    def __init__(self,value,expiration) -> None:
         self.value = value
-        self.ttl = ttl
-        self.expiration_epoch = time.time() + ttl if ttl else None
+        self.expiration = expiration
+        self.expiration_epoch = time.time() + expiration if expiration else None
 
     def __str__(self) -> str:
-        return f'{self.value} ({self.ttl}s)' if self.ttl else f'{self.value}'
+        return f'{self.value} ({self.expiration}s)' if self.expiration else f'{self.value}'
     
     def __repr__(self) -> str:
         return str(self)
