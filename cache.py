@@ -4,32 +4,37 @@ import threading
 
 from cache_entry import CacheEntry
 from factory.storage_factory import StorageFactory
-from factory.worker_factory import CleanupWorker
-from factory.persistance_factory import JsonPersistance
+from factory.worker_factory import CleanupWorker, PersistanceWorker
+from factory.persistance_factory import PersistanceFactory
 
 class ThreadSafeCache:
     """
     Features 
     - Uses lock to make thread safe updates
     - Uses LRU policy for capacity management
-    - Implements Expiration Policy on Cache Keys by using a background thread
+    - Implements Expiration Policy on Cache Keys and cleans up expired entries using a background thread
+    - Persists the cached data to disk periodically 
     """
     def __init__(
             self,
             capacity=5,
             eviction_policy='lru',
-            cleanup_interval=5
+            cleanup_interval=5,
+            persistance_type='json'
         ) -> None:
         self._capacity = capacity
         self._cleanup_interval = cleanup_interval
         self._lock = threading.Lock()
         self._storage = StorageFactory.get_manager(eviction_policy,capacity=capacity)
-        self._persistance = JsonPersistance()
+        self._persistance = PersistanceFactory.get_manager(persistance_type)
         self.__start_workers__()
 
     def __start_workers__(self):
         self._storage_cleanup_worker = CleanupWorker()
         self._storage_cleanup_worker.start(self._periodic_cleanup)
+        
+        self._persistance_worker = PersistanceWorker()
+        self._persistance_worker.start(self._periodic_save)
     
     def get(self,key):
         with self._lock:
@@ -61,8 +66,8 @@ class ThreadSafeCache:
             self.clear()
 
     def _periodic_save(self):
-        while True:
-            time.sleep(15)
+        while not self._persistance_worker._stop_event.is_set():
+            self._persistance_worker.pause(interval=self._cleanup_interval)
             self.persist()
 
 if __name__=='__main__':

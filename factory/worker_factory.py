@@ -6,14 +6,14 @@ class WorkerFactory:
     registry = {}
 
     @classmethod
-    def register_manager(cls,how):
+    def register_worker(cls,how):
         def wrap_fn(wrapped_cls):
             cls.registry[how] = wrapped_cls
             return wrapped_cls
         return wrap_fn
     
     @classmethod
-    def get_manager(cls,how,**kwargs):
+    def get_worker(cls,how,**kwargs):
         print(how,kwargs)
         try:
             return cls.registry[how](**kwargs)
